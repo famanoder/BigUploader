@@ -59,14 +59,18 @@ app.post('/uploader',function(req,res,next){
         var uploadBodyToken=req.body.uploadtoken;
         if (global['file'+uploadBodyToken]&&global['file'+uploadBodyToken]>=0) {
           var pcs=global['file'+uploadBodyToken];
+          var ss=global['file'+uploadBodyToken+'size'];
           if (pcs>=100) {
             global['file'+uploadBodyToken]=null;
+            
+            global['file'+uploadBodyToken+'size']=null;
             pcs=100;
           }
           res.json({
             mes:1,
             info:{
-              percent:pcs
+              percent:pcs,
+              lens:ss
             }
           });
         }else{
@@ -106,6 +110,7 @@ app.post('/uploader',function(req,res,next){
             var n=Math.round(bytesReceived/bytesExpected*100);
             if (isIE789==1) {
               global['file'+uploadToken]=n;
+              global['file'+uploadToken+'size']=bytesExpected;
             };
             //res.write("<script>window.parent.edituploadback("+n+","+form.bytesReceived+","+form.bytesExpected+","+mainId+")</script>");
           
@@ -140,7 +145,7 @@ app.post('/uploader',function(req,res,next){
               if (ll>=req.query.lens) {console.log('n:'+req.query.index);
                 console.log('ok');
 
-                var p='./public/imgs/'+uploadToken+'_'+req.query.name;
+                var p='./public/imgs/'+uploadToken+'_'+unescape(req.query.name);
 
                 fs.open(p, 'a', function (err, fd) {
                   if (err) {
@@ -163,13 +168,15 @@ app.post('/uploader',function(req,res,next){
 
                       if (req.query.chunks==req.query.index*1+1) {
                         var bkdata={
-                          path:host+'/imgs/'+uploadToken+'_'+req.query.name
+                          path:host+'/imgs/'+uploadToken+'_'+unescape(req.query.name)
                         }
-                        var bk='window.callback_('+JSON.stringify(bkdata)+')';
+                        
                         if(req.query.other_data){
                           bkdata.other_data=req.query.other_data;
-                          bk+=';if(window.parent){window.parent.callback('+JSON.stringify(bkdata)+')}';
+                          
                         }
+                        var bk='window.callback_('+JSON.stringify(bkdata)+')';
+                        bk+=';if(window.parent!=top){window.parent.callback('+JSON.stringify(bkdata)+')}';
                         global['_file'+uploadToken]=null;
                         res.write(bk);
                       }
@@ -187,15 +194,16 @@ app.post('/uploader',function(req,res,next){
             if (isIE789==1) {
               var files=files.uploadfile;
               if (files) {
-                fs.renameSync(files.path,'./public/imgs/'+uploadToken+'_'+req.query.name);
+                fs.renameSync(files.path,'./public/imgs/'+uploadToken+'_'+unescape(files.name));
                 var bkdata={
-                  path:host+'/imgs/'+uploadToken+'_'+req.query.name
+                  path:host+'/imgs/'+uploadToken+'_'+unescape(files.name)
                 }
-                bk='<script>window.parent.callback_('+JSON.stringify(bkdata)+');';
+                
                 if(req.query.other_data){
                   bkdata.other_data=req.query.other_data;
                 }
-                bk+=';if(window.parent.parent){window.parent.parent.callback('+JSON.stringify(bkdata)+')}</script>';
+                bk='<script>window.parent.callback_('+JSON.stringify(bkdata)+');';
+                bk+=';if(window.parent.parent!=window.parent.top){window.parent.parent.callback('+JSON.stringify(bkdata)+')}</script>';
                 res.write(bk);
                 res.end();
               }else{
