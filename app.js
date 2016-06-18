@@ -202,7 +202,7 @@ app.post('/uploader',function(req,res,next){
                 if(req.query.other_data){
                   bkdata.other_data=req.query.other_data;
                 }
-                bk='<script>window.parent.callback_('+JSON.stringify(bkdata)+');';
+                bk='<script>window.parent.callback_('+JSON.stringify(bkdata)+');</script>';
                 //bk+=';if(window.parent.top!=window.parent){window.parent.parent.callback('+JSON.stringify(bkdata)+')}</script>';
                 res.write(bk);
                 res.end();
