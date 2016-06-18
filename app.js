@@ -32,7 +32,41 @@ function createWeb(pagename,name,_path){
   });
   
 }
+function mkYYMMDDfilePath(fn){
+  var path='./public/imgs/';
+  var date=new Date(),
+    y=date.getFullYear(),
+    m=date.getMonth()+1,
+    d=date.getDate();
 
+    m=m.toString().length<2?'0'+m:m;
+    d=d.toString().length<2?'0'+d:d;
+  fs.exists(path+y,function(is){
+    if (is) {
+      fs.exists(path+y+'/'+m,function(s){
+        if (s) {
+          fs.exists(path+y+'/'+m+'/'+d,function(ss){
+            if (ss) {
+              fn&&fn();
+            }else{
+              fs.mkdirSync(path+y+'/'+m+'/'+d);
+              fn&&fn();
+            }
+          });
+        }else{
+          fs.mkdirSync(path+y+'/'+m);
+          fs.mkdirSync(path+y+'/'+m+'/'+d);
+          fn&&fn();
+        }
+      });
+    }else{
+      fs.mkdirSync(path+y);
+      fs.mkdirSync(path+y+'/'+m);
+      fs.mkdirSync(path+y+'/'+m+'/'+d);
+      fn&&fn();
+    }
+  });
+}
 createWeb('/uploader','index','./public/');
 createWeb('/testUploader','testUploader','./public/');
 
@@ -144,46 +178,75 @@ app.post('/uploader',function(req,res,next){
               
               if (ll>=req.query.lens) {console.log('n:'+req.query.index);
                 console.log('ok');
+                var date=new Date();
+                var y=date.getFullYear(),
+                    m=date.getMonth()+1,
+                    d=date.getDate();
 
-                var p='./public/imgs/'+uploadToken+'_'+unescape(req.query.name);
+                    m=m.toString().length<2?'0'+m:m;
+                    d=d.toString().length<2?'0'+d:d;
+                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name);
+                var p='./public'+filep;
 
-                fs.open(p, 'a', function (err, fd) {
-                  if (err) {
-                    throw err;
-                  }
-                  fs.write(fd, Buffer.concat(dd,ll),0, ll,0,function(){
-                    // if (!abort) {
-                    //   res.write('callBackIndex('+req.query.index+');');
-                    // };
-                      var _file={
-                        token:uploadToken,
-                        index:req.query.index
-                      }
-                      var odata=req.query.other_data;
-                      if (odata) {
-                        var ins=JSON.parse(odata).index;
-                        _file.ins=ins;
-                      };
-                      global['_file'+uploadToken]=_file;
+                mkYYMMDDfilePath(function(){
 
-                      if (req.query.chunks==req.query.index*1+1) {
-                        var bkdata={
-                          path:host+'/imgs/'+uploadToken+'_'+unescape(req.query.name)
+                
+                
+
+                // fs.exists(__path+y,function(ist){
+                //   if (ist) {
+                //     fs.exists(__path+y+'/'+m,function(est){
+                //       if(est){
+                //         fs.exists(__path+y+'/'+m+'/'+d,function(dt){
+                //           if (dt) {}
+                //         });
+                //       }else{
+                //         __path+=(y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name));
+                //       }
+                //     });
+                //   }else{
+                //     fs.mkdir(__path+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name));
+                //   }
+                // });
+
+                  fs.open(p, 'a', function (err, fd) {
+                    if (err) {
+                      throw err;
+                    }
+                    fs.write(fd, Buffer.concat(dd,ll),0, ll,0,function(){
+                      // if (!abort) {
+                      //   res.write('callBackIndex('+req.query.index+');');
+                      // };
+                        var _file={
+                          token:uploadToken,
+                          index:req.query.index
                         }
-                        
-                        if(req.query.other_data){
-                          bkdata.other_data=req.query.other_data;
+                        var odata=req.query.other_data;
+                        if (odata) {
+                          var ins=JSON.parse(odata).index;
+                          _file.ins=ins;
+                        };
+                        global['_file'+uploadToken]=_file;
+
+                        if (req.query.chunks==req.query.index*1+1) {
+                          var bkdata={
+                            path:host+filep
+                          }
                           
+                          if(req.query.other_data){
+                            bkdata.other_data=req.query.other_data;
+                            
+                          }
+                          var bk='window.callback_('+JSON.stringify(bkdata)+')';
+                         // bk+=';if(window.top!=window){window.parent.callback('+JSON.stringify(bkdata)+')}';
+                          global['_file'+uploadToken]=null;
+                          res.write(bk);
                         }
-                        var bk='window.callback_('+JSON.stringify(bkdata)+')';
-                       // bk+=';if(window.top!=window){window.parent.callback('+JSON.stringify(bkdata)+')}';
-                        global['_file'+uploadToken]=null;
-                        res.write(bk);
-                      }
-                      fs.close(fd,function(){});
-                      res.end();
-                    });
-                }); 
+                        fs.close(fd,function(){});
+                        res.end();
+                      });
+                  }); 
+                });
               } 
             });
           };
@@ -193,19 +256,32 @@ app.post('/uploader',function(req,res,next){
             err&&console.log(err);
             if (isIE789==1) {
               var files=files.uploadfile;
+
               if (files) {
-                fs.renameSync(files.path,'./public/imgs/'+uploadToken+'_'+unescape(files.name));
-                var bkdata={
-                  path:host+'/imgs/'+uploadToken+'_'+unescape(files.name)
-                }
-                
-                if(req.query.other_data){
-                  bkdata.other_data=req.query.other_data;
-                }
-                bk='<script>window.parent.callback_('+JSON.stringify(bkdata)+');</script>';
-                //bk+=';if(window.parent.top!=window.parent){window.parent.parent.callback('+JSON.stringify(bkdata)+')}</script>';
-                res.write(bk);
-                res.end();
+                var date=new Date();
+                var y=date.getFullYear(),
+                    m=date.getMonth()+1,
+                    d=date.getDate();
+
+                    m=m.toString().length<2?'0'+m:m;
+                    d=d.toString().length<2?'0'+d:d;
+                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(files.name);
+
+                mkYYMMDDfilePath(function(){
+
+                  fs.renameSync(files.path,'./public/'+filep);
+                  var bkdata={
+                    path:host+filep
+                  }
+                  
+                  if(req.query.other_data){
+                    bkdata.other_data=req.query.other_data;
+                  }
+                  bk='<script>window.parent.callback_('+JSON.stringify(bkdata)+');</script>';
+                  //bk+=';if(window.parent.top!=window.parent){window.parent.parent.callback('+JSON.stringify(bkdata)+')}</script>';
+                  res.write(bk);
+                  res.end();
+                });
               }else{
                 res.end();
               };

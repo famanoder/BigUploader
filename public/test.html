@@ -9,12 +9,12 @@
 <iframe src="" frameborder="0" width=600></iframe>
 <script src="http://localhost:5000/jquery0.js"></script>
 <!--[if IE 7]> 
-	<script type="text/javascript" src="http://cdn.famanoder.com/javascripts/lib/json2.js"></script>	
+	<script type="text/javascript" src="http://cdn.famanoder.com/javascripts/json2.js"></script>	
 <![endif]-->
 <script>
 $(function(){
 	$('iframe').each(function(i){
-		var _src='http://localhost:5000/index.html?show=1&setDomainPath='+location.origin+'/callback_data.html&other_data=';
+		var _src='http://localhost:5000/index.html?show=1&setDomainPath='+window.location.protocol + "//" + window.location.hostname+'/callback_data.html&other_data=';
 		_src+=JSON.stringify({
 			order:(i+1),
 			index:(i+1)
