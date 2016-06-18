@@ -176,7 +176,7 @@ app.post('/uploader',function(req,res,next){
                           
                         }
                         var bk='window.callback_('+JSON.stringify(bkdata)+')';
-                        bk+=';if(window.parent!=top){window.parent.callback('+JSON.stringify(bkdata)+')}';
+                       // bk+=';if(window.top!=window){window.parent.callback('+JSON.stringify(bkdata)+')}';
                         global['_file'+uploadToken]=null;
                         res.write(bk);
                       }
@@ -203,7 +203,7 @@ app.post('/uploader',function(req,res,next){
                   bkdata.other_data=req.query.other_data;
                 }
                 bk='<script>window.parent.callback_('+JSON.stringify(bkdata)+');';
-                bk+=';if(window.parent.parent!=window.parent.top){window.parent.parent.callback('+JSON.stringify(bkdata)+')}</script>';
+                //bk+=';if(window.parent.top!=window.parent){window.parent.parent.callback('+JSON.stringify(bkdata)+')}</script>';
                 res.write(bk);
                 res.end();
               }else{

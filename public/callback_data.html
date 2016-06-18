@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	<!-- <script src="./jquery0.js"></script> -->
+	<script>
+		var loc=window.location;
+		var search=loc.search.substr(1);
+		var searchArr=search.indexOf('&')!=-1?search.split('&'):[search];
+		function getURLData(k) {
+		    var param = {};
+		    for (var i = 0; i < k.length; i++) {
+		    	if(k[i]!=""){
+		    		var v = k[i].split('=');
+			        for (var j = 0; j < v.length; j++) {
+			            var key = decodeURIComponent(v[0]);
+			            var value = decodeURIComponent(v[1]);
+			            param[key] = value;
+			        }
+		    	}else{
+		    		return false;
+		    	}
+		    }
+		    return param;
+		}
+		var url={
+		    query:getURLData(searchArr),
+		    setParam:function(name,value){
+		    	// return search
+				var param=getURLData(searchArr);
+				param[name]=value;
+				var parArr=[];
+				for(var i in param){
+					parArr.push(i+'='+param[i]);
+				}
+				//location.href=location.pathname+"?"+parArr.join('&');
+				return parArr.join('&');
+			},
+		    param:function(par){
+		    	return getURLData(searchArr)[par];
+		    }
+		}
+		window.parent.parent.callback(JSON.parse(url.query.datas));
+	</script>
+</body>
+</html>
