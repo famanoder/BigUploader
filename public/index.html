@@ -6,8 +6,9 @@
 	<style>
 	*{padding: 0;margin: 0;}
 	#uploadFilePlaceholder{display: inline-block;*display: inline;*zoom:1;border-bottom: 1px solid #eee;}
-		.prograssInfo{border: 1px solid #ddd;border-bottom: 0;padding: 10px;background-color: #FFFDFC;position:relative;}
+		.prograssInfo{border: 1px solid #ddd;border-bottom: 0;padding: 10px;background-color: #FFFDFC;position:relative;color:#666;font-size:13px;}
 		.prograssInfo:hover{background: #fafafa;}
+		.uploadFileName{margin-bottom: 6px;max-width:280px;float:left;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;}
 		.sptip{position: absolute;top: 0;right: 0;padding: 2px 5px;background-color: #FBF4F0;border-left: 1px solid #ddd;border-bottom: 1px solid #ddd;}
 	</style>
 </head>
@@ -396,8 +397,16 @@
 					.append('');
 
 					var fieldItem=function (index,name,size) {
+						var delthis='delthis';
+						var dn='';
+						if (index==0) {
+							dn='display:none;';
+						}
+						if (window.top!=window) {
+							delthis='';
+						}
 						return [
-							'<div data-index="'+index+'" status=0 class="prograssInfo" style="color:#666;font-size:13px;width:'+(prograssWidth+150)+'px;">',
+							'<div data-index="'+index+'" status=0 class="prograssInfo" style="width:'+(prograssWidth+150)+'px;">',
 								'<div class="sptip" style="display:none;">speed:<span class="speed"></span>&nbsp;&nbsp;rest:<span class="rest"></span></div>',
 								'<div style="overflow:hidden;">',
 									'<p class="uploadFileName" style="margin-bottom: 6px;max-width:'+prograssWidth+'px;float:left;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">'+name+'</p>',
@@ -408,7 +417,7 @@
 										'<div class="prograssWidth" style="position:absolute;left:0;top:0;bottom:0;background:#f60;border-radius:4px;"></div>',
 									'</div>',
 									'<span class="prograssPercent" style="float:left;margin-left:10px;">0%</span>',
-									'<a class="cancelUpload" style="float:left;margin-left:10px;color:#29b0ea;cursor:pointer;">取消</a>',
+									'<a class="cancelUpload '+delthis+'" style="'+dn+'float:left;margin-left:10px;color:#29b0ea;cursor:pointer;">取消</a>',
 									'<a class="lookUploadedFile" style="display:none;float:left;margin-left:10px;color:#29b0ea;cursor:pointer;">预览</a>',
 								'</div>',
 							'</div>'
@@ -446,9 +455,12 @@
 								onprogress:function(p){
 									callbk(p,f);
 									if(p>=100){
-										$('.prograssInfo[data-index='+f+']').attr('status',1)
-										var ff=$('.prograssInfo[status=0]').first().attr('data-index');
-										if (ff) {startFile(ff,files);}
+										$('.prograssInfo[data-index='+f+']').attr('status',1).find('.delthis').show();
+										var ff=$('.prograssInfo[status=0]').first();
+										if (ff.attr('data-index')) {
+											ff.find('.delthis').hide();
+											startFile(ff.attr('data-index'),files);
+										}
 
 									}
 								}
@@ -530,6 +542,15 @@
 						// }, 500)
 					})
 					.on('click','.cancelUpload',function(){
+						if ($(this).hasClass('delthis')) {
+							$(this).parents('.prograssInfo').slideUp('fast',function(){
+								$(this).remove();
+								if (!$('.prograssInfo').length) {
+									$('#uploadBtn').show();
+								}
+							});
+							return false;
+						}
 						location.reload();
 					})
 					.on('click','.lookUploadedFile',function(){
@@ -604,7 +625,11 @@ window.callback_=function(data){
 	}
 
 	if (utils.url.query.show==1) {
-		$('.lookUploadedFile').show();
+		if (window.top==window) {
+			$('.prograssInfo[data-index="'+data.fieldIndex+'"]').find('.lookUploadedFile').show();
+		}else{
+			$('.lookUploadedFile').show();
+		}
 	}
 }
 	</script>
