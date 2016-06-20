@@ -178,18 +178,23 @@
 			    this.chunkSize=obj.chunkSize||200*1024;
 			    this.chunks=Math.ceil(this.files.size/this.chunkSize);
 			    this.index=0;
+			    this.fieldIndex=obj.fieldIndex||0;
+			    this.hash='';
 			    this.onprogress=obj.onprogress||function(p){console.log(p);};
 			  }
 			  Files.prototype={
 			    postFiles:function(){
 				  var $self=this;
+				  console.log($self.files)
 				  if (this.files.size>50*1024*1024) {
 
 				    var fileReader = new FileReader(),spark = new SparkMD5.ArrayBuffer();
 				    fileReader.onload = function (e) {
 				          spark.append(e.target.result);   
+				          spark.append($self.files.name);
+						  spark.append($self.files.lastModifiedDate.toString());
 				          $self.hash=spark.end();    
-				          window.__hash__=$self.hash;       
+				          // window.__hash__=$self.hash;       
 				          var stored=localStorage.getItem('fileUploadInfos');
 				          var odata=utils.url.query.other_data,
 				                ins=0;
@@ -272,7 +277,11 @@
 			      var other_data=utils.url.query.other_data;
 			      other_data=other_data?other_data:'';
 
+<<<<<<< HEAD
 			      this.url='/uploader?index='+this.index+'&chunks='+this.chunks+'&host='+(location.protocol+'//'+location.host)+'&__token__='+this.__token__+'&isIE=0&lens='+(this.end-this.start)+'&name='+encodeURIComponent(this.files.name)+'&other_data='+other_data;
+=======
+			      this.url='/uploader?index='+this.index+'&chunks='+this.chunks+'&host='+(location.protocol+'//'+location.host)+'&__token__='+this.__token__+'&isIE=0&lens='+(this.end-this.start)+'&name='+escape(this.files.name)+'&other_data='+other_data+'&fieldIndex='+this.fieldIndex+'&__hash__='+this.hash;
+>>>>>>> origin/master
 			      var xhr = new XMLHttpRequest();
 			      xhr.upload.addEventListener("progress", function(evt){
 			        if (evt.lengthComputable) {
@@ -298,6 +307,7 @@
 			      xhr.send(fd);
 			    }
 			  }
+
 			return {
 				getRandomStr:getRandomStr,
 				url:url,
@@ -340,7 +350,11 @@
 					var form=$('<form method="POST" action="" target="uploadFileHideFrame" enctype="multipart/form-data" id="uploaderForm"></form>');	
 
 					var uploadBtn=$('<div id="uploadBtn" class="'+(btnClass?btnClass:'')+'">'+btnText+'</div>');
+<<<<<<< HEAD
 					var inputFile=$('<input name="uploadfile" accept=".'+accept.join(',.')+'" type="file" multiple id="uploadFile">');
+=======
+					var inputFile=$('<input name="uploadfile" accept=".'+accept.join(',.')+'" type="file" id="uploadFile" multiple>');
+>>>>>>> origin/master
 					inputFile.attr('style','position:absolute;top:10px;left:-100px;right:0;bottom:0;opacity:0;filter:alpha(opacity=0);');
 					(!btnClass)&&uploadBtn.css(btnStyle);
 
@@ -349,23 +363,26 @@
 
 					$(contID)
 					.append(form)
-					.append([
-						'<div class="prograssInfo" style="color:#666;font-size:13px;display:none;width:'+(prograssWidth+150)+'px;">',
-							'<div style="overflow:hidden;">',
-								'<p class="uploadFileName" style="margin-bottom: 6px;max-width:'+prograssWidth+'px;float:left;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;"></p>',
-								'<span style="float:left;">（<span class="uploadFileSize">-.--M</span>）</span>',
-							'</div>',
-							'<div style="overflow:hidden;">',
-								'<div class="prograssBar" style="float:left;width:'+prograssWidth+'px;height:8px;border:1px solid #F36A0E;top:2px;border-radius:5px;position:relative;">',
-									'<div class="prograssWidth" style="position:absolute;left:0;top:0;bottom:0;background:#f60;border-radius:4px;"></div>',
-								'</div>',
-								'<span class="prograssPercent" style="float:left;margin-left:10px;">0%</span>',
-								'<a class="cancelUpload" style="float:left;margin-left:10px;color:#29b0ea;cursor:pointer;">取消</a>',
-								'<a class="lookUploadedFile" style="display:none;float:left;margin-left:10px;color:#29b0ea;cursor:pointer;">预览</a>',
-							'</div>',
-						'</div>'
-					].join(''));
+					.append('');
 
+					var fieldItem=function (index,name,size) {
+						return [
+							'<div data-index="'+index+'" status=0 class="prograssInfo" style="color:#666;font-size:13px;width:'+(prograssWidth+150)+'px;">',
+								'<div style="overflow:hidden;">',
+									'<p class="uploadFileName" style="margin-bottom: 6px;max-width:'+prograssWidth+'px;float:left;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">'+name+'</p>',
+									'<span style="float:left;">（<span class="uploadFileSize">'+size+'</span>）</span>',
+								'</div>',
+								'<div style="overflow:hidden;">',
+									'<div class="prograssBar" style="float:left;width:'+prograssWidth+'px;height:8px;border:1px solid #F36A0E;top:2px;border-radius:5px;position:relative;">',
+										'<div class="prograssWidth" style="position:absolute;left:0;top:0;bottom:0;background:#f60;border-radius:4px;"></div>',
+									'</div>',
+									'<span class="prograssPercent" style="float:left;margin-left:10px;">0%</span>',
+									'<a class="cancelUpload" style="float:left;margin-left:10px;color:#29b0ea;cursor:pointer;">取消</a>',
+									'<a class="lookUploadedFile" style="display:none;float:left;margin-left:10px;color:#29b0ea;cursor:pointer;">预览</a>',
+								'</div>',
+							'</div>'
+						].join('');
+					}
 					$('body')
 					.append('<iframe src="" frameborder="0" name="uploadFileHideFrame" style="display:none;"></iframe>')
 					.append('<iframe src="" frameborder="0" class="hifram" style="display:none;"></iframe>')
@@ -385,21 +402,47 @@
 						// };
 						var v=$(this).val();
 						$('#uploadBtn').hide();
-						$('.prograssInfo').show().find('.uploadFileName').html(v.substr(v.lastIndexOf('\\')+1));
-						
-						if (this.files) {
-							$('.uploadFileSize').html(utils.format.fileSize(fileSize));
-						  var Files=new utils.Files({
-						    files:this.files[0],
-						    chunkSize:10*1024*1024,
-						    onprogress:function(p){
-						      callbk(p);
-						    }
-						  });
-						  Files.postFiles();
-						}else{
-							action+='&name='+finfo.name;
+						//$('.prograssInfo').show().find('.uploadFileName').html(v.substr(v.lastIndexOf('\\')+1));
+						var f=0;
+						var startFile=function(f,files) {
+							if (f>=files.length) {
+								return false;
+							}
+						 	var Files=new utils.Files({
+								files:files[f],
+								chunkSize:10*1024*1024,
+								fieldIndex:f,
+								onprogress:function(p){
+									callbk(p,f);
+									if(p>=100){
+										console.log(p)
+										$('.prograssInfo[data-index='+f+']').attr('status',1)
+										var ff=$('.prograssInfo[status=0]').first().attr('data-index');
+										if (ff) {startFile(ff,files);}
+										
+									}
+								}
+							});
+							Files.postFiles();
+						}
+						var createField=function (files) {
+							if (files) {
 
+								for (var i = 0; i < files.length; i++) {
+									$(contID)
+									.append(fieldItem(i,files[i].name,utils.format.fileSize(files[i].size)))
+									//startFile(files[i]);
+								}
+								//$('.uploadFileSize').html(utils.format.fileSize(fileSize));
+								startFile(0,files);
+							}
+						}  
+						if (this.files) {
+							//$('.uploadFileSize').html(utils.format.fileSize(fileSize));
+						  	createField(this.files);
+						}else{
+							action+='&name='+finfo.name;      
+               
 							$('#uploaderForm').attr('action',action).submit();
 							// var getData=function(){
 							// 	$.post('/uploader',{
@@ -475,9 +518,16 @@
 			btnClass:utils.url.query.btnClass
 		});
 	});
-function callbk(n){
-	$('.prograssPercent').html(n+'%');
-	$('.prograssWidth').width($('.prograssBar').width()*n/100);
+function callbk(n,f){
+	if (f!=undefined) {
+		var fb=$('.prograssInfo[data-index="'+f+'"]');
+		fb.find('.prograssPercent').html(n+'%');
+		fb.find('.prograssWidth').width($('.prograssBar').width()*n/100);
+	}else {
+		$('.prograssPercent').html(n+'%');
+		$('.prograssWidth').width($('.prograssBar').width()*n/100);
+	}
+	
 }
 window.callback_=function(data){
 	 if (localStorage) {
@@ -487,16 +537,16 @@ window.callback_=function(data){
 	        ins=JSON.parse(odata).index;
 	      }
 	    var storedInfo=localStorage.getItem('fileUploadInfos');
-	    if (window.__hash__) {
+	    if (data.__hash__) {
 	      storedInfo=JSON.parse(storedInfo);
 	      var okToken=[];
 	      for(var i=0;i<storedInfo.length;i++){
 	        if (odata) {
-	          if (storedInfo[i].hash==window.__hash__&&ins==storedInfo[i].ins) {
+	          if (storedInfo[i].hash==data.__hash__&&ins==storedInfo[i].ins) {
 	            okToken.push(storedInfo[i].__token);
 	          }
 	        }else{
-	          if (storedInfo[i].hash==window.__hash__) {
+	          if (storedInfo[i].hash==data.__hash__) {
 	            okToken.push(storedInfo[i].__token);
 	          }
 	        }
@@ -511,6 +561,7 @@ window.callback_=function(data){
 	    }
 	  }
 	$('.lookUploadedFile').attr('_src',data.path);
+	$('.prograssInfo[data-index="'+data.fieldIndex+'"]').attr('fileurl',data.path);
 	var acrossDomainPath=utils.url.query.setDomainPath;
 	if (window.top!=window) {
 		$('.hifram').attr('src',acrossDomainPath+'?datas='+JSON.stringify(data));

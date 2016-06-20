@@ -226,12 +226,14 @@ app.post('/uploader',function(req,res,next){
 
                         if (req.query.chunks==req.query.index*1+1) {
                           var bkdata={
-                            path:host+filep
+                            path:host+filep,
+                            fieldIndex:req.query.fieldIndex,
+                            __hash__:req.query.__hash__
                           }
                           
                           if(req.query.other_data){
                             bkdata.other_data=req.query.other_data;
-                            
+                                                                       
                           }
                           var bk='window.callback_('+JSON.stringify(bkdata)+')';
                          // bk+=';if(window.top!=window){window.parent.callback('+JSON.stringify(bkdata)+')}';
