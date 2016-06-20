@@ -6,8 +6,9 @@
 	<style>
 	*{padding: 0;margin: 0;}
 	#uploadFilePlaceholder{display: inline-block;*display: inline;*zoom:1;border-bottom: 1px solid #eee;}
-		.prograssInfo{border: 1px solid #ddd;border-bottom: 0;padding: 10px;background-color: #FFFDFC;}
+		.prograssInfo{border: 1px solid #ddd;border-bottom: 0;padding: 10px;background-color: #FFFDFC;position:relative;}
 		.prograssInfo:hover{background: #fafafa;}
+		.sptip{position: absolute;top: 0;right: 0;padding: 2px 5px;background-color: #FBF4F0;border-left: 1px solid #ddd;border-bottom: 1px solid #ddd;}
 	</style>
 </head>
 <body>
@@ -168,6 +169,23 @@
 							fmed=parseFloat(s/1024/1024/1024).toFixed(2)+spe[3];
 						};
 						return fmed;
+					},
+					ss2hhmmss:function(ss){
+						var h=0,m=0,s=0;
+						if (ss<60) {
+							s=ss;
+						}else if(ss>=60&&ss<60*60){
+							m=parseInt(ss/60);
+							s=ss-(m*60);
+						}else if(ss>=60*60){
+							h=parseInt(ss/60/60);
+							m=parseInt((ss-(h*60*60))/60);
+							s=ss-(h*60*60+m*60);
+						}
+						var add0=function(z){
+							return z.toString().length<2?'0'+z:z;
+						}
+						return add0(h)+':'+add0(m)+':'+add0(s);
 					}
 				}
 			}();
@@ -180,6 +198,8 @@
 			    this.index=0;
 			    this.fieldIndex=obj.fieldIndex||0;
 			    this.hash='';
+				this.startTime=new Date().getTime();
+				this.speed=0;
 			    this.onprogress=obj.onprogress||function(p){console.log(p);};
 			  }
 			  Files.prototype={
@@ -291,6 +311,12 @@
 			          var led=self.index*self.chunkSize*1+evt.loaded*1;
 			          var p=parseFloat((led)/self.files.size*100).toFixed(2);
 			          p=p>=100?100:p;
+					  self.speed=led/((new Date().getTime()-self.startTime)/1000);
+					  var restTime=self.files.size/self.speed*1000-(new Date().getTime()-self.startTime);
+					  var probar=$('.prograssInfo[data-index="'+self.fieldIndex+'"]');
+					  probar.find('.speed').html(format.fileSize(self.speed)+'/s');
+					  probar.find('.rest').html(format.ss2hhmmss(Math.ceil(restTime/1000)));
+
 			          self.onprogress&&self.onprogress(p);
 			        }else {
 			          console.log('unable to compute');
@@ -372,6 +398,7 @@
 					var fieldItem=function (index,name,size) {
 						return [
 							'<div data-index="'+index+'" status=0 class="prograssInfo" style="color:#666;font-size:13px;width:'+(prograssWidth+150)+'px;">',
+								'<div class="sptip" style="display:none;">speed:<span class="speed"></span>&nbsp;&nbsp;rest:<span class="rest"></span></div>',
 								'<div style="overflow:hidden;">',
 									'<p class="uploadFileName" style="margin-bottom: 6px;max-width:'+prograssWidth+'px;float:left;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">'+name+'</p>',
 									'<span style="float:left;">（<span class="uploadFileSize">'+size+'</span>）</span>',
@@ -508,6 +535,12 @@
 					.on('click','.lookUploadedFile',function(){
 						var oper=window.open($(this).attr('_src'));
 						oper.document.body.innerHTML='<img src="'+$(this).attr('_src')+'">';
+					})
+					.on('mouseenter','.prograssInfo',function(){
+						$(this).find('.sptip').slideDown('fast');
+					})
+					.on('mouseleave','.prograssInfo',function(){
+						$(this).find('.sptip').slideUp('fast');
 					});
 				}
 			}
