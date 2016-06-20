@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 var formidable=require('formidable');
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var compress=require('compression');
 var fs=require('fs');
 var StringDecoder = require('string_decoder').StringDecoder
 var app = express();
@@ -22,6 +23,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+// app.use(compress());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
@@ -121,13 +123,7 @@ app.post('/uploader',function(req,res,next){
             form.keepExtensions = true; 
             var bodys=[];
             var abort=0;
-        // var cookies=function () {
-        //     var cks=req.headers.cookie.split(';'),obj={};
-        //     for(var i=0;i<cks.length;i++){
-        //         obj[cks[i].split('=')[0].replace(/\s+/ig,'')]=unescape(cks[i].split('=')[1]);
-        //     }
-        //     return obj;
-        // }();  
+        
         var host=req.query.host;
         var uploadToken=req.query.__token__;
         var isIE789=req.query.isIE;
@@ -185,7 +181,7 @@ app.post('/uploader',function(req,res,next){
 
                     m=m.toString().length<2?'0'+m:m;
                     d=d.toString().length<2?'0'+d:d;
-                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name);
+                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+decodeURIComponent(req.query.name);
                 var p='./public'+filep;
 
                 mkYYMMDDfilePath(function(){
@@ -201,11 +197,11 @@ app.post('/uploader',function(req,res,next){
                 //           if (dt) {}
                 //         });
                 //       }else{
-                //         __path+=(y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name));
+                //         __path+=(y+'/'+m+'/'+d+'/'+uploadToken+'_'+decodeURIComponent(req.query.name));
                 //       }
                 //     });
                 //   }else{
-                //     fs.mkdir(__path+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name));
+                //     fs.mkdir(__path+y+'/'+m+'/'+d+'/'+uploadToken+'_'+decodeURIComponent(req.query.name));
                 //   }
                 // });
 
@@ -265,7 +261,7 @@ app.post('/uploader',function(req,res,next){
 
                     m=m.toString().length<2?'0'+m:m;
                     d=d.toString().length<2?'0'+d:d;
-                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(files.name);
+                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+decodeURIComponent(files.name);
 
                 mkYYMMDDfilePath(function(){
 
@@ -291,7 +287,9 @@ app.post('/uploader',function(req,res,next){
     
 
 });
-
+app.all('*',function(req, res, next){
+  console.log('url:'+(req.url))
+});
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');

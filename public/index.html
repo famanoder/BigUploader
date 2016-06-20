@@ -134,7 +134,7 @@
 				if (obj.value) {
 					var prefix=obj.value.toLowerCase().substr(obj.value.lastIndexOf('.')+1);
 					s.type=prefix;
-					s.name=escape(obj.value.substr(obj.value.lastIndexOf('\\')+1));
+					s.name=encodeURIComponent(obj.value.substr(obj.value.lastIndexOf('\\')+1));
 				};
 				return s;
 			}
@@ -272,7 +272,7 @@
 			      var other_data=utils.url.query.other_data;
 			      other_data=other_data?other_data:'';
 
-			      this.url='/uploader?index='+this.index+'&chunks='+this.chunks+'&host='+(location.protocol+'//'+location.host)+'&__token__='+this.__token__+'&isIE=0&lens='+(this.end-this.start)+'&name='+escape(this.files.name)+'&other_data='+other_data;
+			      this.url='/uploader?index='+this.index+'&chunks='+this.chunks+'&host='+(location.protocol+'//'+location.host)+'&__token__='+this.__token__+'&isIE=0&lens='+(this.end-this.start)+'&name='+encodeURIComponent(this.files.name)+'&other_data='+other_data;
 			      var xhr = new XMLHttpRequest();
 			      xhr.upload.addEventListener("progress", function(evt){
 			        if (evt.lengthComputable) {
@@ -340,7 +340,7 @@
 					var form=$('<form method="POST" action="" target="uploadFileHideFrame" enctype="multipart/form-data" id="uploaderForm"></form>');	
 
 					var uploadBtn=$('<div id="uploadBtn" class="'+(btnClass?btnClass:'')+'">'+btnText+'</div>');
-					var inputFile=$('<input name="uploadfile" accept=".'+accept.join(',.')+'" type="file" id="uploadFile">');
+					var inputFile=$('<input name="uploadfile" accept=".'+accept.join(',.')+'" type="file" multiple id="uploadFile">');
 					inputFile.attr('style','position:absolute;top:10px;left:-100px;right:0;bottom:0;opacity:0;filter:alpha(opacity=0);');
 					(!btnClass)&&uploadBtn.css(btnStyle);
 
