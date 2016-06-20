@@ -14,7 +14,7 @@
 <script>
 $(function(){
 	$('iframe').each(function(i){
-		var _src='http://localhost:5000/index.html?show=1&setDomainPath='+window.location.protocol + "//" + window.location.hostname+'/callback_data.html&other_data=';
+		var _src='http://localhost:5000/uploader?show=1&setDomainPath='+window.location.protocol + "//" + window.location.hostname+'/callback_data.html&other_data=';
 		_src+=JSON.stringify({
 			order:(i+1),
 			index:(i+1)
