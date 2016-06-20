@@ -8,26 +8,26 @@
 <iframe src="" frameborder="0" width=600></iframe>
 <iframe src="" frameborder="0" width=600></iframe>
 <script src="http://localhost:5000/jquery0.js"></script>
-<!--[if IE 7]> 
-	<script type="text/javascript" src="http://cdn.famanoder.com/javascripts/json2.js"></script>	
+<!--[if IE 7]>
+	<script type="text/javascript" src="http://cdn.famanoder.com/javascripts/json2.js"></script>
 <![endif]-->
 <script>
 $(function(){
 	$('iframe').each(function(i){
-		var _src='http://localhost:5000/uploader?show=1&setDomainPath='+window.location.protocol + "//" + window.location.hostname+'/callback_data.html&other_data=';
+		var _src='http://localhost:5000/uploader?accept=zip,png&show=1&setDomainPath='+window.location.protocol + "//" + window.location.host+'/callback_data.html&other_data=';
 		_src+=JSON.stringify({
 			order:(i+1),
 			index:(i+1)
 		});
 		$(this).attr('src',_src);
 	});
-	
+
 });
 function callback(data){
 	console.log(data);
 }
 </script>
-	
+
 </body>
 
 </html>

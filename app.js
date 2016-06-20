@@ -32,7 +32,7 @@ function createWeb(pagename,name,_path){
   app.get(pagename,function(req,res,next){
     require('./createWebRouter')(name,req,res,next,_path);
   });
-  
+
 }
 function mkYYMMDDfilePath(fn){
   var path='./public/imgs/';
@@ -90,7 +90,7 @@ app.post('/uploader',function(req,res,next){
             mes:-1
           });
         };
-        
+
       }else{
         var uploadBodyToken=req.body.uploadtoken;
         if (global['file'+uploadBodyToken]&&global['file'+uploadBodyToken]>=0) {
@@ -98,7 +98,7 @@ app.post('/uploader',function(req,res,next){
           var ss=global['file'+uploadBodyToken+'size'];
           if (pcs>=100) {
             global['file'+uploadBodyToken]=null;
-            
+
             global['file'+uploadBodyToken+'size']=null;
             pcs=100;
           }
@@ -115,15 +115,15 @@ app.post('/uploader',function(req,res,next){
           });
         };
       };
-      
+
     }else{
         var form=new formidable.IncomingForm();
             form.encoding='utf-8';
             form.uploadDir =  './public/images/';
-            form.keepExtensions = true; 
+            form.keepExtensions = true;
             var bodys=[];
             var abort=0;
-        
+
         var host=req.query.host;
         var uploadToken=req.query.__token__;
         var isIE789=req.query.isIE;
@@ -136,14 +136,14 @@ app.post('/uploader',function(req,res,next){
             abort=1;
         })
         .on('progress',function(bytesReceived, bytesExpected){
-          
+
             var n=Math.round(bytesReceived/bytesExpected*100);
             if (isIE789==1) {
               global['file'+uploadToken]=n;
               global['file'+uploadToken+'size']=bytesExpected;
             };
             //res.write("<script>window.parent.edituploadback("+n+","+form.bytesReceived+","+form.bytesExpected+","+mainId+")</script>");
-          
+
         });
         if (isIE789==0) {
           form.handlePart=function(part) {
@@ -171,7 +171,7 @@ app.post('/uploader',function(req,res,next){
 
             part.on('end', function() {
               ddd.push(Buffer.concat(dd,ll));
-              
+
               if (ll>=req.query.lens) {console.log('n:'+req.query.index);
                 console.log('ok');
                 var date=new Date();
@@ -181,14 +181,10 @@ app.post('/uploader',function(req,res,next){
 
                     m=m.toString().length<2?'0'+m:m;
                     d=d.toString().length<2?'0'+d:d;
-                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+decodeURIComponent(req.query.name);
+                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name);
                 var p='./public'+filep;
 
                 mkYYMMDDfilePath(function(){
-
-                
-                
-
                 // fs.exists(__path+y,function(ist){
                 //   if (ist) {
                 //     fs.exists(__path+y+'/'+m,function(est){
@@ -197,11 +193,11 @@ app.post('/uploader',function(req,res,next){
                 //           if (dt) {}
                 //         });
                 //       }else{
-                //         __path+=(y+'/'+m+'/'+d+'/'+uploadToken+'_'+decodeURIComponent(req.query.name));
+                //         __path+=(y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name));
                 //       }
                 //     });
                 //   }else{
-                //     fs.mkdir(__path+y+'/'+m+'/'+d+'/'+uploadToken+'_'+decodeURIComponent(req.query.name));
+                //     fs.mkdir(__path+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(req.query.name));
                 //   }
                 // });
 
@@ -230,10 +226,10 @@ app.post('/uploader',function(req,res,next){
                             fieldIndex:req.query.fieldIndex,
                             __hash__:req.query.__hash__
                           }
-                          
+
                           if(req.query.other_data){
                             bkdata.other_data=req.query.other_data;
-                                                                       
+
                           }
                           var bk='window.callback_('+JSON.stringify(bkdata)+')';
                          // bk+=';if(window.top!=window){window.parent.callback('+JSON.stringify(bkdata)+')}';
@@ -243,13 +239,13 @@ app.post('/uploader',function(req,res,next){
                         fs.close(fd,function(){});
                         res.end();
                       });
-                  }); 
+                  });
                 });
-              } 
+              }
             });
           };
         };
-        
+
           form.parse(req,function(err,field,files){
             err&&console.log(err);
             if (isIE789==1) {
@@ -263,7 +259,7 @@ app.post('/uploader',function(req,res,next){
 
                     m=m.toString().length<2?'0'+m:m;
                     d=d.toString().length<2?'0'+d:d;
-                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+decodeURIComponent(files.name);
+                var filep='/imgs/'+y+'/'+m+'/'+d+'/'+uploadToken+'_'+unescape(files.name);
 
                 mkYYMMDDfilePath(function(){
 
@@ -271,7 +267,7 @@ app.post('/uploader',function(req,res,next){
                   var bkdata={
                     path:host+filep
                   }
-                  
+
                   if(req.query.other_data){
                     bkdata.other_data=req.query.other_data;
                   }
@@ -284,14 +280,12 @@ app.post('/uploader',function(req,res,next){
                 res.end();
               };
             };
-          });   
+          });
     };
-    
+
 
 });
-app.all('*',function(req, res, next){
-  console.log('url:'+(req.url))
-});
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
