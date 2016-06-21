@@ -220,7 +220,6 @@
 			  Files.prototype={
 			    postFiles:function(){
 				  var $self=this;
-				  console.log($self.files)
 				  if (this.files.size>50*1024*1024) {
 
 				    var fileReader = new FileReader(),spark = new SparkMD5.ArrayBuffer();
@@ -365,15 +364,15 @@
 		}();
 	$(function(){
 
-
-		utils.cookie.setCookie('__token__',utils.getRandomStr());
+		window.dropedCouldStart=true;
+		// utils.cookie.setCookie('__token__',utils.getRandomStr());
 
 		var uploader=function(){
 			return {
 				init:function(o){
 					var contID=o.id,
 						accept=utils.fileLimits.accepts||['jpeg','png'],
-						dragArea=o.dragArea||document;
+						dragArea=o.dragArea||document,
 						btnText=o.btnText||'选择上传文件',
 						btnClass=o.btnClass,
 						btnStyle={
@@ -437,20 +436,23 @@
 							'</div>'
 						].join('');
 					}
+					var filesArr=null;
 					var startFile=function(files) {
 						var ff=$('.prograssInfo[status=0]').first();
 						var ins=ff.attr('data-index');
-						if (ins) {
+						if (ins&&window.dropedCouldStart) {
 							ff.find('.delthis').hide();
 							var Files=new utils.Files({
 								files:files[ins],
 								chunkSize:10*1024*1024,
 								fieldIndex:ins,
 								onprogress:function(p){
+									window.dropedCouldStart=false;
 									callbk(p,ins);
 									if(p>=100){
+										window.dropedCouldStart=true;
 										$('.prograssInfo[data-index='+ins+']').attr('status',1).find('.delthis').show();
-										startFile(files);
+										startFile(filesArr);
 									}
 								}
 							});
@@ -458,36 +460,57 @@
 						}
 					}
 
+					var filesLen=0;
+					var dropCount=0;
 					var createField=function (files) {
 						if (files) {
-							for (var i = 0; i < files.length; i++) {
+							if (dropCount>1) {
+								filesLen+=(files.length);
+							}
+							var _filesArr=[].slice.call(files,0);
+							if (filesArr&&filesArr.length) {
+
+								filesArr=filesArr.concat(_filesArr);
+							}else{
+								filesArr=_filesArr;
+							}
+
+							for (var i = filesArr.length-files.length; i < filesArr.length; i++) {
+								var inss=i;
+								if (dropCount>1) {
+									inss+=filesLen;
+								}
 								$(contID)
-								.append(fieldItem(i,files[i].name,utils.format.fileSize(files[i].size)))
+								.append(fieldItem(i,filesArr[i].name,utils.format.fileSize(filesArr[i].size)))
 								//startFile(files[i]);
 							}
-							startFile(files);
+							if (window.dropedCouldStart==true) {
+								startFile(filesArr);
+							}
+
 						}
 					}
 
 					dragArea.addEventListener("dragenter", function(e){
-				    	e.stopPropagation(); e.preventDefault(); 
+				    	e.stopPropagation(); e.preventDefault();
 				    	$(".dragmask").addClass('dragmask_over').removeClass('dragmask_out');
-				    }, false); 
+				    }, false);
 				　　dragArea.addEventListener("dragover" , function(e){
-						e.stopPropagation(); e.preventDefault(); 
-					}, false);  
+						e.stopPropagation(); e.preventDefault();
+					}, false);
 					dragArea.addEventListener("dragleave" , function(e){
-						e.stopPropagation(); e.preventDefault(); 
+						e.stopPropagation(); e.preventDefault();
 						$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
 					}, false);
-					dragArea.addEventListener("drop", function(e){ 
+					dragArea.addEventListener("drop", function(e){
+						dropCount++;
 				　　　　e.stopPropagation();
 				　　　　e.preventDefault();
 						$('#uploadBtn').hide();
 						$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
-				　　　　createField(e.dataTransfer.files);	
+				　　　　createField(e.dataTransfer.files);
 				　　}, false);
-					
+
 					$('body')
 					.append('<iframe src="" frameborder="0" name="uploadFileHideFrame" style="display:none;"></iframe>')
 					.append('<iframe src="" frameborder="0" class="hifram" style="display:none;"></iframe>')
@@ -509,7 +532,7 @@
 						$('#uploadBtn').hide();
 						//$('.prograssInfo').show().find('.uploadFileName').html(v.substr(v.lastIndexOf('\\')+1));
 
-						
+
 						if (this.files) {
 							//$('.uploadFileSize').html(utils.format.fileSize(fileSize));
 						  	createField(this.files);
