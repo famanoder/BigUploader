@@ -375,6 +375,7 @@
 						dragArea=o.dragArea||document,
 						btnText=o.btnText||'选择上传文件',
 						btnClass=o.btnClass,
+						maxFileSize=o.ms||utils.url.query.ms||200,//K
 						btnStyle={
 							padding:'0.7em 0',
 							width:'140px',
@@ -412,7 +413,7 @@
 					var fieldItem=function (index,name,size) {
 						var delthis='delthis';
 						var dn='';
-						if (index==0) {
+						if (index==0&&window.top==window) {
 							dn='display:none;';
 						}
 						if (window.top!=window) {
@@ -460,83 +461,76 @@
 						}
 					}
 
-					var filesLen=0;
 					var dropCount=0;
 					var createField=function (files) {
 						if (files) {
-							if (dropCount>1) {
-								filesLen+=(files.length);
-							}
 							var _filesArr=[].slice.call(files,0);
-							if (filesArr&&filesArr.length) {
-
-								filesArr=filesArr.concat(_filesArr);
-							}else{
-								filesArr=_filesArr;
+							var _files=[];//过滤type size
+							for(var i=0;i<_filesArr.length;i++){
+								var _name=_filesArr[i].name;
+								if(_filesArr[i].size>maxFileSize||
+									$.inArray(_name.substr(_name.lastIndexOf('.')+1).toLowerCase(),accept)!=-1){
+									_files.push(_filesArr[i]);
+								};
 							}
-
-							for (var i = filesArr.length-files.length; i < filesArr.length; i++) {
-								var inss=i;
-								if (dropCount>1) {
-									inss+=filesLen;
-								}
+							if (filesArr&&filesArr.length) {
+								filesArr=filesArr.concat(_files);
+							}else{
+								filesArr=_files;
+							}
+							for (var i = filesArr.length-_files.length; i < filesArr.length; i++) {
 								$(contID)
 								.append(fieldItem(i,filesArr[i].name,utils.format.fileSize(filesArr[i].size)))
-								//startFile(files[i]);
 							}
-							if (window.dropedCouldStart==true) {
+							if (window.dropedCouldStart==true&&filesArr&&filesArr.length) {
+								$('#uploadBtn').hide();
 								startFile(filesArr);
 							}
-
 						}
 					}
-
-					dragArea.addEventListener("dragenter", function(e){
-				    	e.stopPropagation(); e.preventDefault();
-				    	$(".dragmask").addClass('dragmask_over').removeClass('dragmask_out');
-				    }, false);
-				　　dragArea.addEventListener("dragover" , function(e){
-						e.stopPropagation(); e.preventDefault();
-					}, false);
-					dragArea.addEventListener("dragleave" , function(e){
-						e.stopPropagation(); e.preventDefault();
-						$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
-					}, false);
-					dragArea.addEventListener("drop", function(e){
-						dropCount++;
-				　　　　e.stopPropagation();
-				　　　　e.preventDefault();
-						$('#uploadBtn').hide();
-						$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
-				　　　　createField(e.dataTransfer.files);
-				　　}, false);
-
+					if (window.top==window) {
+						dragArea.addEventListener("dragenter", function(e){
+					    	e.stopPropagation(); e.preventDefault();
+					    	$(".dragmask").addClass('dragmask_over').removeClass('dragmask_out');
+					    }, false);
+					　　dragArea.addEventListener("dragover" , function(e){
+							e.stopPropagation(); e.preventDefault();
+						}, false);
+						dragArea.addEventListener("dragleave" , function(e){
+							e.stopPropagation(); e.preventDefault();
+							$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
+						}, false);
+						dragArea.addEventListener("drop", function(e){
+							dropCount++;
+					　　　　e.stopPropagation();
+					　　　　e.preventDefault();
+					　　　　createField(e.dataTransfer.files);
+							$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
+					　　}, false);
+					}
 					$('body')
 					.append('<iframe src="" frameborder="0" name="uploadFileHideFrame" style="display:none;"></iframe>')
 					.append('<iframe src="" frameborder="0" class="hifram" style="display:none;"></iframe>')
 					.on('change','#uploadFile',function(){
-						var finfo=utils.getFileInfo(this);
-						var fileSize=finfo.size;
-						var maxFileSize=utils.url.query.ms||200;
-						var fileType=finfo.type;
 
-						if ($.inArray(fileType, accept)==-1) {
-							console.log('not access type');
-							return false;
-						};
+						// var fileSize=finfo.size;
+
+
 						// if (fileSize/1024>maxFileSize) {
 						// 	console.log('too much big');
 						// 	return false;
 						// };
-						var v=$(this).val();
-						$('#uploadBtn').hide();
-						//$('.prograssInfo').show().find('.uploadFileName').html(v.substr(v.lastIndexOf('\\')+1));
-
 
 						if (this.files) {
-							//$('.uploadFileSize').html(utils.format.fileSize(fileSize));
 						  	createField(this.files);
 						}else{
+							$('#uploadBtn').hide();
+							var finfo=utils.getFileInfo(this);
+							var fileType=finfo.type;
+							if ($.inArray(fileType, accept)==-1) {
+								console.log('not access type');
+								return false;
+							};
 							action+='&name='+finfo.name;
 
 							$('#uploaderForm').attr('action',action).submit();
@@ -626,7 +620,8 @@
 			id:'#uploadFilePlaceholder',
 			accept:utils.url.query.accept,
 			btnText:utils.url.query.btnText,
-			btnClass:utils.url.query.btnClass
+			btnClass:utils.url.query.btnClass,
+			ms:1024*1024*2//2G
 		});
 	});
 function callbk(n,f){
