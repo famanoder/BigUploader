@@ -10,6 +10,20 @@
 		.prograssInfo:hover{background: #fafafa;}
 		.uploadFileName{margin-bottom: 6px;max-width:280px;float:left;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;}
 		.sptip{position: absolute;top: 0;right: 0;padding: 2px 5px;background-color: #FBF4F0;border-left: 1px solid #ddd;border-bottom: 1px solid #ddd;}
+		.dragmask{position: fixed;top:0;bottom: 0;left: 0;right: 0;border:5px dashed #A7A5A5;text-align: center;font-size: 90px;color: #F3F5F7;background-color: rgba(0, 0, 0, 0.2);z-index: -11111;font-weight: 700;-webkit-transition: all .35s ease-out;
+		-o-transition: all .35s ease-out;
+		transition: all .35s ease-out;-webkit-transform: scale(2, 2);
+		-ms-transform: scale(2, 2);
+		-o-transform: scale(2, 2);
+		transform: scale(2, 2);opacity: 0;}
+		.dragmask_over{-webkit-transform: scale(1, 1);
+		-ms-transform: scale(1, 1);
+		-o-transform: scale(1, 1);
+		transform: scale(1, 1);opacity: 1;z-index: 11111;}
+		.dragmask_out{-webkit-transform: scale(2, 2);
+		-ms-transform: scale(2, 2);
+		-o-transform: scale(2, 2);
+		transform: scale(2, 2);opacity: 0;z-index: -11111;}
 	</style>
 </head>
 <body>
@@ -359,6 +373,7 @@
 				init:function(o){
 					var contID=o.id,
 						accept=utils.fileLimits.accepts||['jpeg','png'],
+						dragArea=o.dragArea||document;
 						btnText=o.btnText||'选择上传文件',
 						btnClass=o.btnClass,
 						btnStyle={
@@ -394,8 +409,7 @@
 
 					$(contID)
 					.append(form)
-					.append('');
-
+					.append('<div class="dragmask" style="line-height:'+$(window).height()+'px;">+</div>');
 					var fieldItem=function (index,name,size) {
 						var delthis='delthis';
 						var dn='';
@@ -423,6 +437,57 @@
 							'</div>'
 						].join('');
 					}
+					var startFile=function(files) {
+						var ff=$('.prograssInfo[status=0]').first();
+						var ins=ff.attr('data-index');
+						if (ins) {
+							ff.find('.delthis').hide();
+							var Files=new utils.Files({
+								files:files[ins],
+								chunkSize:10*1024*1024,
+								fieldIndex:ins,
+								onprogress:function(p){
+									callbk(p,ins);
+									if(p>=100){
+										$('.prograssInfo[data-index='+ins+']').attr('status',1).find('.delthis').show();
+										startFile(files);
+									}
+								}
+							});
+							Files.postFiles();
+						}
+					}
+
+					var createField=function (files) {
+						if (files) {
+							for (var i = 0; i < files.length; i++) {
+								$(contID)
+								.append(fieldItem(i,files[i].name,utils.format.fileSize(files[i].size)))
+								//startFile(files[i]);
+							}
+							startFile(files);
+						}
+					}
+
+					dragArea.addEventListener("dragenter", function(e){
+				    	e.stopPropagation(); e.preventDefault(); 
+				    	$(".dragmask").addClass('dragmask_over').removeClass('dragmask_out');
+				    }, false); 
+				　　dragArea.addEventListener("dragover" , function(e){
+						e.stopPropagation(); e.preventDefault(); 
+					}, false);  
+					dragArea.addEventListener("dragleave" , function(e){
+						e.stopPropagation(); e.preventDefault(); 
+						$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
+					}, false);
+					dragArea.addEventListener("drop", function(e){ 
+				　　　　e.stopPropagation();
+				　　　　e.preventDefault();
+						$('#uploadBtn').hide();
+						$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
+				　　　　createField(e.dataTransfer.files);	
+				　　}, false);
+					
 					$('body')
 					.append('<iframe src="" frameborder="0" name="uploadFileHideFrame" style="display:none;"></iframe>')
 					.append('<iframe src="" frameborder="0" class="hifram" style="display:none;"></iframe>')
@@ -444,41 +509,7 @@
 						$('#uploadBtn').hide();
 						//$('.prograssInfo').show().find('.uploadFileName').html(v.substr(v.lastIndexOf('\\')+1));
 
-						var startFile=function(f,files) {
-							if (f>=files.length) {
-								return false;
-							}
-						 	var Files=new utils.Files({
-								files:files[f],
-								chunkSize:10*1024*1024,
-								fieldIndex:f,
-								onprogress:function(p){
-									callbk(p,f);
-									if(p>=100){
-										$('.prograssInfo[data-index='+f+']').attr('status',1).find('.delthis').show();
-										var ff=$('.prograssInfo[status=0]').first();
-										if (ff.attr('data-index')) {
-											ff.find('.delthis').hide();
-											startFile(ff.attr('data-index'),files);
-										}
-
-									}
-								}
-							});
-							Files.postFiles();
-						}
-						var createField=function (files) {
-							if (files) {
-
-								for (var i = 0; i < files.length; i++) {
-									$(contID)
-									.append(fieldItem(i,files[i].name,utils.format.fileSize(files[i].size)))
-									//startFile(files[i]);
-								}
-								//$('.uploadFileSize').html(utils.format.fileSize(fileSize));
-								startFile(0,files);
-							}
-						}
+						
 						if (this.files) {
 							//$('.uploadFileSize').html(utils.format.fileSize(fileSize));
 						  	createField(this.files);
