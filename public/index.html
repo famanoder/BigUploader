@@ -132,6 +132,20 @@
 				}
 				return obj;
 			}();
+			var ie=function(ua){
+				var iebool=/msie/ig.test(ua);
+				return {
+					is:function(){
+						return iebool;
+					},
+					v:iebool?ua.match(/msie (\d+)/)[1]:undefined
+				}
+			}(navigator.userAgent.toLowerCase());
+
+			var Browser={
+				isIE:ie.is(),
+				IEVersion:ie.v
+			}
 			var fileInfo=function(obj){
 				var s={};
 				if (obj.files&&obj.files[0]) {
@@ -155,7 +169,7 @@
 				return s;
 			}
 			var fileLimits=function(){
-				var accepts=url.query.accept,s={};
+				var accepts=url.query.accept?url.query.accept.toLowerCase():'jpeg,png',s={};
 
 				if (accepts) {
 					var acpts=[];
@@ -352,6 +366,7 @@
 			  }
 
 			return {
+				Browser:Browser,
 				getRandomStr:getRandomStr,
 				url:url,
 				cookie:cookie,
@@ -371,7 +386,7 @@
 			return {
 				init:function(o){
 					var contID=o.id,
-						accept=utils.fileLimits.accepts||['jpeg','png'],
+						accept=utils.fileLimits.accepts,
 						dragArea=o.dragArea||document,
 						btnText=o.btnText||'选择上传文件',
 						btnClass=o.btnClass,
@@ -388,6 +403,7 @@
 						},
 						prograssWidth=o.prograssWidth*1||280;
 
+					var ltIE10=utils.Browser.IEVersion<10?true:false;
 					var other_data=utils.url.query.other_data;
 					other_data=other_data?other_data:'';
 					var formToken=utils.getRandomStr();
@@ -408,15 +424,19 @@
 					.append(uploadBtn.append(inputFile));
 
 					$(contID)
-					.append(form)
-					.append('<div class="dragmask" style="line-height:'+$(window).height()+'px;">+</div>');
+					.append(form);
+
+					if (!ltIE10) {
+						$(contID).append('<div class="dragmask" style="line-height:'+$(window).height()+'px;">+</div>');
+					}
+
 					var fieldItem=function (index,name,size) {
 						var delthis='delthis';
 						var dn='';
-						if (index==0&&window.top==window) {
+						if (index==0&&window.top==window&&!ltIE10) {
 							dn='display:none;';
 						}
-						if (window.top!=window) {
+						if (window.top!=window||ltIE10) {
 							delthis='';
 						}
 						return [
@@ -468,9 +488,11 @@
 							var _files=[];//过滤type size
 							for(var i=0;i<_filesArr.length;i++){
 								var _name=_filesArr[i].name;
-								if(_filesArr[i].size>maxFileSize||
+								if(_filesArr[i].size<maxFileSize&&
 									$.inArray(_name.substr(_name.lastIndexOf('.')+1).toLowerCase(),accept)!=-1){
 									_files.push(_filesArr[i]);
+								}else{
+									console.warn('file:'+_name+' is too big or is not access type.please check it!');
 								};
 							}
 							if (filesArr&&filesArr.length) {
@@ -488,7 +510,7 @@
 							}
 						}
 					}
-					if (window.top==window) {
+					if (!ltIE10) {
 						dragArea.addEventListener("dragenter", function(e){
 					    	e.stopPropagation(); e.preventDefault();
 					    	$(".dragmask").addClass('dragmask_over').removeClass('dragmask_out');
@@ -501,11 +523,20 @@
 							$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
 						}, false);
 						dragArea.addEventListener("drop", function(e){
+							$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
 							dropCount++;
 					　　　　e.stopPropagation();
 					　　　　e.preventDefault();
-					　　　　createField(e.dataTransfer.files);
-							$(".dragmask").removeClass('dragmask_over').addClass('dragmask_out');
+							if (window.top==window) {
+								createField(e.dataTransfer.files);
+							}else{
+								if (dropCount>1) {
+									return false;
+								}
+								createField([e.dataTransfer.files[0]]);
+							}
+					　　　　
+
 					　　}, false);
 					}
 					$('body')
@@ -531,8 +562,9 @@
 								console.log('not access type');
 								return false;
 							};
-							action+='&name='+finfo.name;
 
+							action+='&name='+finfo.name;
+							$(contID).append(fieldItem(0,finfo.name,'--'));
 							$('#uploaderForm').attr('action',action).submit();
 							// var getData=function(){
 							// 	$.post('/uploader',{
@@ -559,12 +591,13 @@
 								}).then(function(data){
 									if (data) {
 										var pros=data.info;
-										callbk(pros.percent);
-										$('.uploadFileSize').html(utils.format.fileSize(pros.lens));
-										if (pros.percent>='100') {
-
-											clearInterval(getLoaded);
-										};
+										if (pros) {
+											callbk(pros.percent);
+											$('.uploadFileSize').html(utils.format.fileSize(pros.lens));
+											if (pros.percent>='100') {
+												clearInterval(getLoaded);
+											};
+										}
 									};
 								});
 							}, 500)
@@ -636,7 +669,7 @@ function callbk(n,f){
 
 }
 window.callback_=function(data){
-	 if (localStorage) {
+	 if (localStorage&&(!utils.Browser.IEVersion||utils.Browser.IEVersion>=10)) {
 	    var odata=utils.url.query.other_data,
 	        ins=0;
 	      if (odata) {
