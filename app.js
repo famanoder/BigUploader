@@ -72,11 +72,16 @@ function mkYYMMDDfilePath(fn){
 createWeb('/uploader','index','./public/');
 createWeb('/testUploader','testUploader','./public/');
 
-
+app.options('*',function(req,res,next){
+  res.setHeader('Access-Control-Allow-Origin','*');
+  res.setHeader('Access-Control-Allow-Headers','X-Requested-With');
+  res.end();
+});
 app.post('/uploader',function(req,res,next){
     if (req.body.getfileinfo) {
       // 1
       // 2
+      res.setHeader('Access-Control-Allow-Origin','*');
       if (req.body.getfileinfo==1) {
         var tk=req.body.token;
         var ins=req.body.ins;
@@ -234,6 +239,7 @@ app.post('/uploader',function(req,res,next){
                           var bk='window.callback_('+JSON.stringify(bkdata)+')';
                          // bk+=';if(window.top!=window){window.parent.callback('+JSON.stringify(bkdata)+')}';
                           global['_file'+uploadToken]=null;
+                           res.setHeader('Access-Control-Allow-Origin','*');
                           res.write(bk);
                         }
                         fs.close(fd,function(){});
@@ -267,12 +273,12 @@ app.post('/uploader',function(req,res,next){
                   var bkdata={
                     path:host+filep
                   }
-
                   if(req.query.other_data){
                     bkdata.other_data=req.query.other_data;
                   }
                   bk='<script>window.parent.callback_('+JSON.stringify(bkdata)+');</script>';
                   //bk+=';if(window.parent.top!=window.parent){window.parent.parent.callback('+JSON.stringify(bkdata)+')}</script>';
+                   res.setHeader('Access-Control-Allow-Origin','*');
                   res.write(bk);
                   res.end();
                 });
