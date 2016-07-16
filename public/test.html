@@ -19,15 +19,17 @@ $(function(){
 			order:(i+1),
 			index:(i+1)
 		});
-		$(this).attr('src',_src);
+		$(this).attr('src',_src).attr('data-ins',1+i);
 	});
 
 });
 function callback(data){
 	console.log(data);
+	$('iframe[data-ins="'+JSON.parse(data.other_data).index+'"]').attr('fileUrl',data.path);
 }
 </script>
 
 </body>
 
 </html>
+
