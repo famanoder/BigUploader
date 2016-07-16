@@ -187,6 +187,9 @@
 			    this.files=obj.files;
 			    this.__token__=utils.getRandomStr();
 			    this.url=obj.url||location.href;
+				this.serverURL=obj.serverURL;
+				this.brokenSize=obj.brokenSize;
+				this.staticHost=obj.staticHost||(location.protocol+'//'+location.host);
 			    this.chunkSize=obj.chunkSize||200*1024;
 			    this.chunks=Math.ceil(this.files.size/this.chunkSize);
 			    this.index=0;
@@ -199,7 +202,7 @@
 			  Files.prototype={
 			    postFiles:function(){
 				  var $self=this;
-				  if (this.files.size>50*1024*1024) {
+				  if (this.files.size>this.brokenSize) {
 
 				    var fileReader = new FileReader(),spark = new SparkMD5.ArrayBuffer();
 				    fileReader.onload = function (e) {
@@ -244,7 +247,7 @@
 				              if (odata) {
 				                _data.ins=ins;
 				              };
-				              $.post('http://localhost:5000/uploader',_data).then(function(data){
+				              $.post($self.serverURL,_data).then(function(data){
 				                if (data.mes==1) {
 				                  $self.index=data.index*1+1;
 				                }
@@ -297,7 +300,7 @@
 			      var other_data=utils.url.query.other_data;
 			      other_data=other_data?other_data:'';
 
-			      this.url='http://localhost:5000/uploader?index='+this.index+'&chunks='+this.chunks+'&host='+(location.protocol+'//'+location.host)+'&__token__='+this.__token__+'&isIE=0&lens='+(this.end-this.start)+'&name='+escape(this.files.name)+'&other_data='+other_data+'&fieldIndex='+this.fieldIndex+'&__hash__='+this.hash;
+			      this.url=''+this.serverURL+'?index='+this.index+'&chunks='+this.chunks+'&domain='+utils.Domain+'&host='+this.staticHost+'&__token__='+this.__token__+'&isIE=0&lens='+(this.end-this.start)+'&name='+escape(this.files.name)+'&other_data='+other_data+'&fieldIndex='+this.fieldIndex+'&__hash__='+this.hash;
 			      var xhr = new XMLHttpRequest();
 			      xhr.upload.addEventListener("progress", function(evt){
 			        if (evt.lengthComputable) {
@@ -329,9 +332,13 @@
 			      xhr.send(fd);
 			    }
 			  }
-
+			var domain=function(){
+				var dm=document.domain.split('.');
+				return dm[dm.length-2]+'.'+dm[dm.length-1];
+			}();
 			return {
 				Browser:Browser,
+				Domain:domain,
 				getRandomStr:getRandomStr,
 				url:url,
 				cookie:cookie,
@@ -353,6 +360,9 @@
 					var contID=o.id,
 						accept=utils.fileLimits.accepts,
 						dragArea=o.dragArea||document,
+						staticHost=o.staticHost||(location.protocol+'//'+location.host),
+						serverURL=o.serverURL||'http://localhost:5000/uploader',
+						brokenSize=o.brokenSize||50*1024*1024,
 						btnText=o.btnText||'选择上传文件',
 						btnClass=o.btnClass,
 						maxFileSize=o.ms||utils.url.query.ms||200,//K
@@ -372,7 +382,7 @@
 					var other_data=utils.url.query.other_data;
 					other_data=other_data?other_data:'';
 					var formToken=utils.getRandomStr();
-					var action='http://localhost:5000/uploader?isIE=1&__token__='+formToken+'&host='+(location.protocol+'//'+location.host)+'&other_data='+other_data;
+					var action=serverURL+'?isIE=1&domain='+utils.Domain+'&__token__='+formToken+'&host='+staticHost+'&other_data='+other_data;
 					var form=$('<form method="POST" action="" target="uploadFileHideFrame" enctype="multipart/form-data" id="uploaderForm"></form>');
 
 					var uploadBtn=$('<div id="uploadBtn" class="'+(btnClass?btnClass:'')+'">'+btnText+'</div>');
@@ -422,6 +432,9 @@
 							'</div>'
 						].join('');
 					}
+					if (serverURL.indexOf(location.host)==-1&&ltIE10) {
+						document.domain=utils.Domain;
+					}
 					var filesArr=null;
 					var startFile=function(files) {
 						var ff=$('.prograssInfo[status=0]').first();
@@ -431,7 +444,10 @@
 							var Files=new utils.Files({
 								files:files[ins],
 								chunkSize:10*1024*1024,
+								brokenSize:brokenSize,
 								fieldIndex:ins,
+								staticHost:staticHost,
+								serverURL:serverURL,
 								onprogress:function(p){
 									window.dropedCouldStart=false;
 									callbk(p,ins);
@@ -458,6 +474,8 @@
 									_files.push(_filesArr[i]);
 								}else{
 									console.warn('file:'+_name+' is too big or is not access type.please check it!');
+									console.warn('maxsize:'+maxFileSize+',accepts:'+accept);
+									console.info('size:'+_filesArr[i].size+',type:'+_name.substr(_name.lastIndexOf('.')+1).toLowerCase());
 								};
 							}
 							if (filesArr&&filesArr.length) {
@@ -550,7 +568,7 @@
 							// }
 							// getData();
 							var getLoaded=setInterval(function(){
-								$.post('http://localhost:5000/uploader',{
+								$.post(serverURL,{
 									getfileinfo:2,
 									uploadtoken:formToken
 								}).then(function(data){
@@ -612,9 +630,10 @@
 				}
 			}
 		}();
-
-
 		uploader.init({
+			// staticHost:'http://localhost:5000',
+			// serverURL:'http://localhost:5000/uploader',
+			// brokenSize:50*1024*1024,
 			id:'#uploadFilePlaceholder',
 			accept:utils.url.query.accept,
 			btnText:utils.url.query.btnText,
